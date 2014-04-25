@@ -31,18 +31,31 @@ module LineStatus
         pluralize_sentence count, 'user has', 'users have', "reported this service is #{msg}."
       end
 
+      def group_by_freqency(array)
+        array.inject(Hash.new){|h,k| h[k]||=0; h[k]+=1; h}
+      end
+
       def status_summary(status_ids)
         return 'No reported issues.' unless status_ids.size > 0
-        grouped = status_ids.inject(Hash.new){|h,k| h[k]||=0;h[k]+=1; h}
-        sentences = grouped.sort_by {|k,v| v}.reverse.map do |status, count|
+        sentences = group_by_freqency(status_ids).sort_by {|k,v| v}.reverse.map do |status, count|
           summary_with_count(status, count)
         end
         return sentences.join(' ')
       end
 
+      def most_frequent_status(status_ids)
+        return 'on time' unless status_ids.size > 0
+        top_status = group_by_freqency(status_ids).max_by { |a,b| b }.first
+        Feedback.statuses.key(top_status) || 'on time'
+      end
+
       def line_status(line)
         status_ids = Feedback.where(linedir: line).pluck(:status)
-        { status: status_summary(status_ids) }
+        frequent   = most_frequent_status(status_ids).to_s.gsub(/_/, ' ')
+        {
+          summary: status_summary(status_ids),
+          status:  frequent
+        }
       end
 
     end

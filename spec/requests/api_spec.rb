@@ -28,7 +28,8 @@ describe LineStatus::API, request: true do
       get "/api/feedback/999"
 
       data = JSON.parse(last_response.body)
-      expect(data['status']).to eq('No reported issues.')
+      expect(data['summary']).to eq('No reported issues.')
+      expect(data['status']).to eq('on time')
     end
 
     it "on considers recent updates" do
@@ -36,7 +37,8 @@ describe LineStatus::API, request: true do
       get "/api/feedback/999"
 
       data = JSON.parse(last_response.body)
-      expect(data['status']).to eq('No reported issues.')
+      expect(data['summary']).to eq('No reported issues.')
+      expect(data['status']).to eq('on time')
     end
 
     context "on time" do
@@ -50,7 +52,8 @@ describe LineStatus::API, request: true do
         get "/api/feedback/#{linedir}"
 
         data = JSON.parse(last_response.body)
-        expect(data['status']).to eq('1 user has reported this service is running on time.')
+        expect(data['summary']).to eq('1 user has reported this service is running on time.')
+        expect(data['status']).to eq('on time')
       end
 
       it "multiple users reported issue is noted" do
@@ -60,7 +63,8 @@ describe LineStatus::API, request: true do
 
         get "/api/feedback/#{linedir}"
         data = JSON.parse(last_response.body)
-        expect(data['status']).to match(/\d users have reported this service is running on time./)
+        expect(data['summary']).to match(/\d users have reported this service is running on time./)
+        expect(data['status']).to eq('on time')
       end
 
     end
@@ -75,7 +79,8 @@ describe LineStatus::API, request: true do
         get "/api/feedback/#{linedir}"
 
         data = JSON.parse(last_response.body)
-        expect(data['status']).to eq('1 user has reported this service is running a few minutes late.')
+        expect(data['summary']).to eq('1 user has reported this service is running a few minutes late.')
+        expect(data['status']).to eq('late')
       end
 
       it "multiple reported late issue is noted" do
@@ -85,7 +90,8 @@ describe LineStatus::API, request: true do
 
         get "/api/feedback/#{linedir}"
         data = JSON.parse(last_response.body)
-        expect(data['status']).to match(/\d users have reported this service is running a few minutes late./)
+        expect(data['summary']).to match(/\d users have reported this service is running a few minutes late./)
+        expect(data['status']).to eq('late')
       end
     end
 
@@ -99,7 +105,8 @@ describe LineStatus::API, request: true do
         get "/api/feedback/#{linedir}"
 
         data = JSON.parse(last_response.body)
-        expect(data['status']).to eq('1 user has reported this service is running a VERY late.')
+        expect(data['summary']).to eq('1 user has reported this service is running a VERY late.')
+        expect(data['status']).to eq('very late')
       end
 
       it "multiple reported very late issue is noted" do
@@ -109,7 +116,8 @@ describe LineStatus::API, request: true do
 
         get "/api/feedback/#{linedir}"
         data = JSON.parse(last_response.body)
-        expect(data['status']).to match(/\d users have reported this service is running a VERY late./)
+        expect(data['summary']).to match(/\d users have reported this service is running a VERY late./)
+        expect(data['status']).to eq('very late')
       end
     end
 
@@ -123,7 +131,8 @@ describe LineStatus::API, request: true do
         get "/api/feedback/#{linedir}"
 
         data = JSON.parse(last_response.body)
-        expect(data['status']).to eq('1 user has reported this service is CANCELLED.')
+        expect(data['summary']).to eq('1 user has reported this service is CANCELLED.')
+        expect(data['status']).to eq('cancelled')
       end
 
       it "multiple reported cancelled issue is noted" do
@@ -133,7 +142,26 @@ describe LineStatus::API, request: true do
 
         get "/api/feedback/#{linedir}"
         data = JSON.parse(last_response.body)
-        expect(data['status']).to match(/\d users have reported this service is CANCELLED./)
+        expect(data['summary']).to match(/\d users have reported this service is CANCELLED./)
+        expect(data['status']).to eq('cancelled')
+      end
+    end
+
+    context "mixed" do
+      before(:each) do
+        Feedback.where(linedir: linedir).delete_all
+      end
+
+      it "a single reported cancelled issue is noted" do
+        2.times {
+          Feedback.create(udid: udid, linedir: linedir, status: Feedback.statuses['late'])
+        }
+        Feedback.create(udid: udid, linedir: linedir, status: Feedback.statuses['very_late'])
+        get "/api/feedback/#{linedir}"
+
+        data = JSON.parse(last_response.body)
+        expect(data['summary']).to eq("2 users have reported this service is running a few minutes late. 1 user has reported this service is running a VERY late.")
+        expect(data['status']).to eq('late')
       end
     end
 
