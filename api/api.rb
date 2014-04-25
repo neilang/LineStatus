@@ -1,6 +1,7 @@
 module LineStatus
   class API < Grape::API
     format :json
+    version 'v1', using: :path
 
     # Health check
     get '/' do
