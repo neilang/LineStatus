@@ -3,9 +3,9 @@ require 'securerandom'
 
 describe LineStatus::API, request: true do
 
-  let(:udid){ SecureRandom.hex(40)[0,40] }
-  let(:linedir){ '1234' }
-  let(:status){ 0 }
+  let!(:udid){ SecureRandom.hex(40)[0,40] }
+  let!(:linedir){ '1234' }
+  let!(:status){ 0 }
 
   it "the API health check passes" do
     get "/api/"
@@ -34,6 +34,21 @@ describe LineStatus::API, request: true do
     it "won't accept invalid statuses" do
       post "/api/feedback/#{linedir}", { udid: udid, status: 999 }
       last_response.should_not be_successful
+    end
+
+    it "will create a new record for same UDID/linedir after 30 mins" do
+      Feedback.create(udid: udid, linedir: linedir, updated_at: 31.minutes.ago, status: 1)
+      expect {
+        post "/api/feedback/#{linedir}", { udid: udid, status: 0 }
+      }.to change{Feedback.count}.by(1)
+    end
+
+    it "will update an existing record for same UDID/linedir before 30 mins" do
+      Feedback.create(udid: udid, linedir: linedir, updated_at: 5.minutes.ago, status: 1)
+      expect {
+        post "/api/feedback/#{linedir}", { udid: udid, status: 0 }
+      }.to change{Feedback.count}.by(0)
+
     end
 
   end
