@@ -5,7 +5,7 @@ ruby '2.1.0'
 gem 'rake', '~> 10.3.1'
 gem 'dotenv', '~> 0.11.1', require: 'dotenv'
 
-gem 'slim', '~> 2.0.2'
+# gem 'slim', '~> 2.0.2'
 gem 'activerecord', '~> 4.1.0', require: 'active_record'
 
 group :development, :test do

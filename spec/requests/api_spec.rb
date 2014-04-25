@@ -7,16 +7,22 @@ describe LineStatus::API, request: true do
   let!(:linedir){ '1234' }
   let!(:status){ 0 }
 
-  it "the API health check passes" do
-    get "/api/"
-    last_response.should be_successful
-    results = JSON.parse(last_response.body)
-    results['database'].should be_true
+  describe "health check" do
+    it "the API health check passes" do
+      get "/api/"
+      last_response.should be_successful
+      results = JSON.parse(last_response.body)
+      results['database'].should be_true
+    end
   end
 
-  it "can look up feedback for a line" do
-    get "/api/feedback/#{linedir}"
-    last_response.should be_successful
+  describe "requesting feedback" do
+
+    it "can look up feedback for a line" do
+      get "/api/feedback/#{linedir}"
+      last_response.should be_successful
+    end
+
   end
 
   describe "posting feedback" do
@@ -48,7 +54,6 @@ describe LineStatus::API, request: true do
       expect {
         post "/api/feedback/#{linedir}", { udid: udid, status: 0 }
       }.to change{Feedback.count}.by(0)
-
     end
 
   end
