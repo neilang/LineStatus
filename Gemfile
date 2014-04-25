@@ -23,3 +23,4 @@ group :production do
 end
 
 gem 'padrino', '0.12.1'
+gem 'grape', '~> 0.7.0'

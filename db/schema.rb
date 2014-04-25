@@ -11,12 +11,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 1) do
+ActiveRecord::Schema.define(version: 2) do
 
   create_table "feedbacks", force: true do |t|
-    t.string   "line",                   null: false
-    t.string   "transport",              null: false
-    t.boolean  "inbound"
+    t.string   "linedir",                null: false
     t.integer  "status",     default: 0, null: false
     t.string   "udid"
     t.datetime "created_at"

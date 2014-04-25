@@ -33,4 +33,5 @@ Padrino.configure_apps do
 end
 
 # Mounts the core application for this project
-Padrino.mount('LineStatus::App', :app_file => Padrino.root('app/app.rb')).to('/')
+Padrino.mount('LineStatus::API', app_file: Padrino.root('api/api.rb')).to('/api')
+Padrino.mount('LineStatus::App', app_file: Padrino.root('app/app.rb')).to('/')

@@ -5,8 +5,7 @@ describe Feedback do
   it "should validate a required fields are set" do
     m = Feedback.new; m.valid?
 
-    m.errors.should have_key(:line)
-    m.errors.should have_key(:transport)
+    m.errors.should have_key(:linedir)
     m.errors.should have_key(:udid)
   end
 
