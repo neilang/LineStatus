@@ -15,8 +15,14 @@ module LineStatus
       end
 
       desc "Create/update user feedback for a line/direction ID"
+      params do
+        requires :linedir, type: String, desc: "PTV Line direction ID.", regexp: /^\d+$/
+        requires :udid, type: String, regexp: /^\w{40}$/
+        requires :status, type: Integer, desc: "Status enum", values: -> { Feedback.statuses.values }
+      end
       post ':linedir' do
-        { status: 'Updated' }
+        # TODO: Check if status created in the last 30 mins
+        Feedback.create!(linedir: params[:linedir], udid: params[:udid], status: params[:status])
       end
 
     end
