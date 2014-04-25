@@ -11,6 +11,7 @@ describe LineStatus::API, request: true do
     it "the API health check passes" do
       get "/api/"
       last_response.should be_successful
+
       results = JSON.parse(last_response.body)
       results['database'].should be_true
     end
@@ -21,6 +22,119 @@ describe LineStatus::API, request: true do
     it "can look up feedback for a line" do
       get "/api/feedback/#{linedir}"
       last_response.should be_successful
+    end
+
+    it "there is a default status for a line" do
+      get "/api/feedback/999"
+
+      data = JSON.parse(last_response.body)
+      expect(data['status']).to eq('No reported issues.')
+    end
+
+    it "on considers recent updates" do
+      Feedback.create(udid: udid, linedir: '999', updated_at: 31.minutes.ago, status: 2)
+      get "/api/feedback/999"
+
+      data = JSON.parse(last_response.body)
+      expect(data['status']).to eq('No reported issues.')
+    end
+
+    context "on time" do
+
+      before(:each) do
+        Feedback.where(linedir: linedir).delete_all
+      end
+
+      it "a single reported status is noted" do
+        Feedback.create(udid: udid, linedir: linedir, status: Feedback.statuses['on_time'])
+        get "/api/feedback/#{linedir}"
+
+        data = JSON.parse(last_response.body)
+        expect(data['status']).to eq('1 user has reported this service is running on time.')
+      end
+
+      it "multiple users reported issue is noted" do
+        3.times {
+          Feedback.create(udid: udid, linedir: linedir, status: Feedback.statuses['on_time'])
+        }
+
+        get "/api/feedback/#{linedir}"
+        data = JSON.parse(last_response.body)
+        expect(data['status']).to match(/\d users have reported this service is running on time./)
+      end
+
+    end
+
+    context "late" do
+      before(:each) do
+        Feedback.where(linedir: linedir).delete_all
+      end
+
+      it "a single reported late issue is noted" do
+        Feedback.create(udid: udid, linedir: linedir, status: Feedback.statuses['late'])
+        get "/api/feedback/#{linedir}"
+
+        data = JSON.parse(last_response.body)
+        expect(data['status']).to eq('1 user has reported this service is running a few minutes late.')
+      end
+
+      it "multiple reported late issue is noted" do
+        2.times {
+          Feedback.create(udid: udid, linedir: linedir, status: Feedback.statuses['late'])
+        }
+
+        get "/api/feedback/#{linedir}"
+        data = JSON.parse(last_response.body)
+        expect(data['status']).to match(/\d users have reported this service is running a few minutes late./)
+      end
+    end
+
+    context "very late" do
+      before(:each) do
+        Feedback.where(linedir: linedir).delete_all
+      end
+
+      it "a single reported very late issue is noted" do
+        Feedback.create(udid: udid, linedir: linedir, status: Feedback.statuses['very_late'])
+        get "/api/feedback/#{linedir}"
+
+        data = JSON.parse(last_response.body)
+        expect(data['status']).to eq('1 user has reported this service is running a VERY late.')
+      end
+
+      it "multiple reported very late issue is noted" do
+        2.times {
+          Feedback.create(udid: udid, linedir: linedir, status: Feedback.statuses['very_late'])
+        }
+
+        get "/api/feedback/#{linedir}"
+        data = JSON.parse(last_response.body)
+        expect(data['status']).to match(/\d users have reported this service is running a VERY late./)
+      end
+    end
+
+    context "cancelled" do
+      before(:each) do
+        Feedback.where(linedir: linedir).delete_all
+      end
+
+      it "a single reported cancelled issue is noted" do
+        Feedback.create(udid: udid, linedir: linedir, status: Feedback.statuses['cancelled'])
+        get "/api/feedback/#{linedir}"
+
+        data = JSON.parse(last_response.body)
+        expect(data['status']).to eq('1 user has reported this service is CANCELLED.')
+      end
+
+      it "multiple reported cancelled issue is noted" do
+        2.times {
+          Feedback.create(udid: udid, linedir: linedir, status: Feedback.statuses['cancelled'])
+        }
+
+        get "/api/feedback/#{linedir}"
+        data = JSON.parse(last_response.body)
+        expect(data['status']).to match(/\d users have reported this service is CANCELLED./)
+      end
     end
 
   end
